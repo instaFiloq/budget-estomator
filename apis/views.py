@@ -14,8 +14,12 @@ class ConversationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        instance = self.get_object()
-        instance.delete()
+        try:
+            instance = self.get_object()
+            instance.delete()
+        except:
+            print("new conversation!")
+            
         self.perform_create(serializer)
         
         # Create welcome message
@@ -44,8 +48,9 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
     def get_object(self):
         try:
+            pId=self.kwargs['pk'] if self.kwargs['pk'] else None
             return Conversation.objects.get(
-                pk=self.kwargs['pk'],
+                pk=pId,
                 user_id=self.request.user.user_id
             )
         except Conversation.DoesNotExist:
