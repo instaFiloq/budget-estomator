@@ -14,6 +14,8 @@ class ConversationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        instance = self.get_object()
+        instance.delete()
         self.perform_create(serializer)
         
         # Create welcome message
