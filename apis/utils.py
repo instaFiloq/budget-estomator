@@ -26,6 +26,11 @@ SYSTEM_BUDGET_ESTIMATOR_PROMPT = """
 """
 
 def get_chat_response(messages):
+    
+    print("/************************ OPEN-AI API KEY ********************/")
+    print(settings.OPEN_AI_API_KEY)
+    print("/************************** END API KEY **********************/")
+
     openai.api_key = settings.OPEN_AI_API_KEY
     messages.insert(0, {
         "role": "system",
