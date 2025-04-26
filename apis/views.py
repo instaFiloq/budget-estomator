@@ -21,17 +21,17 @@ class ConversationViewSet(viewsets.ModelViewSet):
             print("new conversation!")
             
         self.perform_create(serializer)
-        
+        startingMessage = "Welcome, i'm a fix and flip projects expert i can help you estimate your project budget. Please start by describing the property you are planing to flip."
         # Create welcome message
         conversation = serializer.instance
         Message.objects.create(
             conversation=conversation,
-            content="Welcome, i'm a fix and flip projects expert i can help you estimate your project budget. Please start by describing the property you are planing to flip.",
+            content=startingMessage,
             role='assistant'
         )
         
         return Response(
-            {"message": "Welcome, how can I help you?"},
+            {"message": startingMessage},
             status=status.HTTP_201_CREATED
         )
 
@@ -60,12 +60,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     def messages(self, request, pk=None):
         conversation = self.get_object()
         
-        # Save user message
-        user_message = Message.objects.create(
-            conversation=conversation,
-            content=request.data['content'],
-            role='user'
-        )
+        prompt = request.data['content']
         
         # Prepare chat history
         messages = conversation.messages.all().order_by('created_at')
@@ -73,10 +68,22 @@ class ConversationViewSet(viewsets.ModelViewSet):
             "role": msg.role,
             "content": msg.content
         } for msg in messages]
+
+        chat_history.append({
+            "role": "user",
+            "content": prompt
+        })
         
         try:
             # Get bot response
             bot_response = get_chat_response(chat_history)
+
+            # Save user message
+            Message.objects.create(
+                conversation=conversation,
+                content=prompt,
+                role='user'
+            )
             
             # Save bot message
             Message.objects.create(
