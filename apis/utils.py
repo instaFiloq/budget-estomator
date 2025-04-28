@@ -32,7 +32,7 @@ def get_chat_response(messages):
         "content": SYSTEM_BUDGET_ESTIMATOR_PROMPT
     })
     response = openai.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4.1-mini",
         messages=messages,
         temperature=0.7
     )
@@ -63,7 +63,7 @@ def get_estimated_budget_response(messages):
         """
     })
     response = openai.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4.1-mini",
         messages=messages,
         temperature=0.7
     )
