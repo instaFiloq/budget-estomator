@@ -35,6 +35,7 @@ APPEND_SLASH=False
 
 ALLOWED_HOSTS = [
     'instafi-agents-h7e3feecawg2gqgg.canadacentral-01.azurewebsites.net',
+    'budget-estomator.onrender.com',
     '127.0.0.1',
     'localhost'
 ]
