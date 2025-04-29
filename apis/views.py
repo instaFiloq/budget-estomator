@@ -107,13 +107,14 @@ class ConversationViewSet(viewsets.ModelViewSet):
             "content": msg.content
         } for msg in messages]
         
-        
+        # return Response({"history": chat_history})
         try:
             budget = get_estimated_budget_response(chat_history)
             
             return Response({"budget": json.loads(budget)})
             
         except Exception as e:
+            print(e)
             return Response(
                 {"error": f"Failed to generate budget: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
