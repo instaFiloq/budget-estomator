@@ -1,5 +1,10 @@
 import openai
 from django.conf import settings
+from openai import OpenAI
+import json
+
+apiKey = settings.OPEN_AI_API_KEY
+client = OpenAI(api_key=apiKey)
 
 SYSTEM_BUDGET_ESTIMATOR_PROMPT = """
     You are a fix and flip expert for real estate projects. your task is to have a conversation with the user and try to collect as much possible information that will help you estimate the project budget.
@@ -81,3 +86,42 @@ def get_estimated_budget_response(messages):
         temperature=0.7
     )
     return response.choices[0].message.content
+
+def perform_web_search(query):
+    prompt = f"""
+    Search for the details about the property at {query}.
+    If found, return the results in the following JSON format:
+
+    {{
+        "address": "",
+        "property_type": "",
+        "bedrooms": "",
+        "bathrooms": "",
+        "square_footage": "",
+        "year_built": "",
+        "listing_price": "",
+        "status": "",
+        "features": ""
+    }}
+
+    If the property cannot be found or there's no reliable data, return: null
+    Only return the JSON or null, with no explanation or extra text.
+    """
+
+    response = client.responses.create(
+        model="gpt-4.1",
+        tools=[{"type": "web_search_preview"}],
+        input=prompt.strip()
+    )
+
+    raw_output = response.output_text.strip()
+
+    # Try to parse the JSON or check if "null"
+    if raw_output.lower() == "null":
+        return None
+
+    try:
+        data = json.loads(raw_output)
+        return data
+    except json.JSONDecodeError:
+        return None

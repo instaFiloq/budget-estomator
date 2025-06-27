@@ -4,8 +4,63 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, NotFound
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer, MessageCreateSerializer
-from .utils import get_chat_response, get_estimated_budget_response
+from .utils import get_chat_response, get_estimated_budget_response, perform_web_search
 import json
+from rest_framework.views import APIView
+
+class TestViewSet(APIView):
+    def post(self, request):
+        address = request.data.get('address')
+        if not address:
+            return Response({"error": "Address is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        bot_response = perform_web_search(address)
+
+        if bot_response is None:
+            message = (
+                "Welcome, I'm a fix and flip projects expert. I can help you estimate your project budget.\n\n"
+                "Based on the property address, I couldn't collect any data.\n\n"
+                "**Please start by describing the property you are planning to flip.**"
+            )
+            return Response({"message": message})
+
+        formatted_data = "\n".join(
+            [f"**{key.replace('_', ' ').capitalize()}**: {value}" for key, value in bot_response.items()]
+        )
+
+        message = (
+            "Welcome, I'm a fix and flip projects expert. I can help you estimate your project budget.\n\n"
+            "Based on the property address, I collected the following data:\n\n"
+            f"{formatted_data}\n\n"
+            "Please adjust the property details and provide any other missing information for that property."
+        )
+
+        return Response({"message": message})
+
+
+def startNewConversation(address):
+    bot_response = perform_web_search(address)
+
+    if bot_response is None:
+        message = (
+            "Welcome, I'm a fix and flip projects expert. I can help you estimate your project budget.\n\n"
+            "Based on the property address, I couldn't collect any data.\n\n"
+            "**Please start by describing the property you are planning to flip.**"
+        )
+    
+    else:
+        formatted_data = "\n".join(
+            [f"**{key.replace('_', ' ').capitalize()}**: {value}" for key, value in bot_response.items()]
+        )
+
+        message = (
+            "Welcome, I'm a fix and flip projects expert. I can help you estimate your project budget.\n\n"
+            "Based on the property address, I collected the following data:\n\n"
+            f"{formatted_data}\n\n"
+            "Please adjust the property details and provide any other missing information for that property."
+        )
+
+    return message
 
 class ConversationViewSet(viewsets.ModelViewSet):
     serializer_class = ConversationSerializer
@@ -21,7 +76,8 @@ class ConversationViewSet(viewsets.ModelViewSet):
             print("new conversation!")
             
         self.perform_create(serializer)
-        startingMessage = "Welcome, i'm a fix and flip projects expert i can help you estimate your project budget. Please start by describing the property you are planing to flip."
+        startingMessage = startNewConversation(serializer.instance.address)
+        
         # Create welcome message
         conversation = serializer.instance
         Message.objects.create(
